@@ -775,13 +775,8 @@ static bool console_update_silent(void)
 #ifdef CONFIG_SILENT_CONSOLE
 	if (env_get("silent")) {
 		gd->flags |= GD_FLG_SILENT;
-	} else {
-		unsigned long flags = gd->flags;
-
-		gd->flags &= ~GD_FLG_SILENT;
-
-		return !!(flags & GD_FLG_SILENT);
-	}
+	else
+		gd->flags |= GD_FLG_SILENT;
 #endif
 
 	return false;
