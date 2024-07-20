@@ -540,6 +540,7 @@ dtb-$(CONFIG_MACH_SUN8I_A33) += \
 	sun8i-a33-inet-d978-rev2.dtb \
 	sun8i-a33-olinuxino.dtb \
 	sun8i-a33-q8-tablet.dtb \
+	sun8i-a33-funboy-40a.dtb \
 	sun8i-a33-sinlinx-sina33.dtb \
 	sun8i-r16-bananapi-m2m.dtb \
 	sun8i-r16-nintendo-nes-classic-edition.dtb \
