@@ -50,6 +50,40 @@
 	aliases {
 		serial0 = &uart0;
 	};
+	panel {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		power-supply = <&reg_vcc5v0>;
+		backlight = <&backlight>;
+		port@0 {
+			reg = <0>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			panel_input: endpoint@0 {
+				reg = <0>;
+				remote-endpoint = <&tcon0_out_panel>;
+			};
+		};
+	};
+};
+
+&simplefb_lcd{
+	status = "okay";
+	vcc-lcd-supply = <&reg_vcc5v0>;
+};
+
+&tcon0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&lcd_rgb666_pins>;
+	status = "okay";
+};
+
+&tcon0_out {
+	tcon0_out_panel: endpoint@0 {
+		reg = <0>;
+		remote-endpoint = <&panel_input>;
+	};
 };
 
 &uart0 {
@@ -61,6 +95,7 @@
 &r_uart {
 	status = "disabled";
 };
+
 &mmc0 {
 	/delete-property/ cd-gpios;
         pinctrl-names = "default";
