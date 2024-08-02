@@ -66,6 +66,19 @@
 			};
 		};
 	};
+	st7701s {
+        compatible = "spi_st7701s";
+        cs-gpio = <&pio 6 10 GPIO_ACTIVE_HIGH>; //PG 10
+        clk-gpio = <&pio 6 7 GPIO_ACTIVE_HIGH>;  //PG7
+        data-gpio = <&pio 6 6 GPIO_ACTIVE_HIGH>;  //PG6
+        reset-gpio = <&pio 7 1 GPIO_ACTIVE_HIGH>; /* PH1 */
+        status = "okay";
+	};
+};
+
+&backlight{
+	/delete-property/ enable-gpios;
+	// enable-gpios = <&pio 7 1 GPIO_ACTIVE_HIGH>; /* PH1 */
 };
 
 &simplefb_lcd{

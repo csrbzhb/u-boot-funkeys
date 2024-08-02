@@ -871,6 +871,42 @@ config VIDEO_LCD_BL_PWM_ACTIVE_LOW
 	---help---
 	Set this if the backlight pwm output is active low.
 
+config VIDEO_ST7701_RESET
+	string "LCD panel st7701 spi reset pin"
+	depends on VIDEO_SUNXI
+	default ""
+	---help---
+	Set the st7701s spi reset pin for the LCD panel. This takes a string in the
+	the format understood by sunxi_name_to_gpio, e.g. PH1 for pin 1 of
+	port H.
+
+config VIDEO_ST7701_CS
+	string "LCD panel st7701 spi cs pin"
+	depends on VIDEO_SUNXI
+	default ""
+	---help---
+	Set the st7701s spi cs pin for the LCD panel. This takes a string in the
+	the format understood by sunxi_name_to_gpio, e.g. PH1 for pin 1 of
+	port H.
+
+config VIDEO_ST7701_DATA
+	string "LCD panel st7701 spi data pin"
+	depends on VIDEO_SUNXI
+	default ""
+	---help---
+	Set the st7701s spi data pin for the LCD panel. This takes a string in the
+	the format understood by sunxi_name_to_gpio, e.g. PH1 for pin 1 of
+	port H.
+
+config VIDEO_ST7701_CLK
+	string "LCD panel st7701 spi clk pin"
+	depends on VIDEO_SUNXI
+	default ""
+	---help---
+	Set the st7701s spi clk pin for the LCD panel. This takes a string in the
+	the format understood by sunxi_name_to_gpio, e.g. PH1 for pin 1 of
+	port H.
+
 config VIDEO_LCD_PANEL_I2C
 	bool "LCD panel needs to be configured via i2c"
 	depends on VIDEO_SUNXI

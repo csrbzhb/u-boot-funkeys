@@ -34,6 +34,7 @@
 #include "../hitachi_tx18d42vm_lcd.h"
 #include "../ssd2828.h"
 #include "simplefb_common.h"
+#include "st7701s.h"
 
 #ifdef CONFIG_VIDEO_LCD_BL_PWM_ACTIVE_LOW
 #define PWM_ON 0
@@ -71,6 +72,351 @@ const struct ctfb_res_modes composite_video_modes[2] = {
 	{ 720,  576, 50, 37037,  27000, 137,   5, 20, 27,   2, 2, 0, FB_VMODE_INTERLACED },
 	{ 720,  480, 60, 37037,  27000, 116,  20, 16, 27,   2, 2, 0, FB_VMODE_INTERLACED },
 };
+
+//--------------------------------------------------------------------------------------
+#define TFT_CS 		202
+#define TFT_SDA		198
+#define TFT_SCLK	199
+#define TFT_RST   225
+
+#define	LCD_CS_SET  	{gpio_set_value(TFT_CS,1);}
+#define	LCD_SDA_SET		{gpio_set_value(TFT_SDA,1);}
+#define	LCD_SCLK_SET	{gpio_set_value(TFT_SCLK,1);}
+								    
+#define	LCD_CS_CLR  	{gpio_set_value(TFT_CS,0);}
+#define	LCD_SDA_CLR		{gpio_set_value(TFT_SDA,0);}
+#define	LCD_SCLK_CLR	{gpio_set_value(TFT_SCLK,0);}
+
+static void write_cmd(uint8_t cmd)
+{
+	uint8_t i = 0;
+	uint16_t command = 0;
+
+	LCD_CS_CLR;
+	udelay(30);
+	command |= cmd;
+
+	for(i=0;i<9;i++)
+	{
+		LCD_SCLK_CLR;
+		if(command&0x0100)
+		{	
+			LCD_SDA_SET;
+		}
+		else
+		{	
+			LCD_SDA_CLR;
+		}
+		udelay(30);
+		LCD_SCLK_SET;
+		udelay(30);
+		command <<= 1;
+	}
+	LCD_CS_SET;
+	udelay(30);
+}
+
+static void write_dat(uint8_t data)
+{
+	uint8_t i = 0;
+	uint16_t my_data = 0x0100;
+
+	LCD_CS_CLR;
+	udelay(30);
+	my_data |= data;
+
+	for(i=0;i<9;i++)
+	{
+		LCD_SCLK_CLR;
+		if(my_data&0x0100)
+		{	
+			LCD_SDA_SET;
+		}
+		else
+		{	
+			LCD_SDA_CLR;
+		}
+		udelay(30);
+		LCD_SCLK_SET;
+		udelay(30);
+		my_data <<= 1;
+	}
+	LCD_CS_SET;
+	udelay(30);
+}
+
+static void st7701_init(void)
+{
+	int ret = 0;
+
+	printf("ili9488 3line spi init...\n");
+	ret =gpio_request(TFT_CS, "TFT-CS");
+    if (ret) 
+	{
+        printf(KERN_ERR "Failed to request tft-cs\n");
+        return;
+	}
+	ret = gpio_direction_output(TFT_CS, 1);
+	if(ret < 0) 
+	{
+		printf("can't set tft-cs!\n");
+	}
+
+	ret =gpio_request(TFT_SDA, "TFT-SDA");
+    if (ret) 
+	{
+        printf(KERN_ERR "Failed to request tft-sda\n");
+        return;
+	}
+	ret = gpio_direction_output(TFT_SDA, 1);
+	if(ret < 0) 
+	{
+		printf("can't set tft-sda!\n");
+	}
+
+	ret =gpio_request(TFT_SCLK, "TFT-SCLK");
+    if (ret) 
+	{
+        printf(KERN_ERR "Failed to request tft-sclk\n");
+        return;
+	}
+	ret = gpio_direction_output(TFT_SCLK, 1);
+	if(ret < 0) 
+	{
+		printf("can't set tft-sclk!\n");
+	}
+	
+	
+#if 0
+	// VCI=2.8V 
+	//************* Reset LCD Driver ****************// 
+    gpio_direction_output(TFT_RST,0);
+    mdelay(200);
+    gpio_direction_output(TFT_RST,1);
+    mdelay(200);
+#endif	
+	//************* Start Initial Sequence **********// 
+    mdelay(120);
+    write_cmd(0xFF);
+    write_dat(0x77);
+    write_dat(0x01);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x10);
+    write_cmd(0xC0);
+    write_dat(0x3B);
+    write_dat(0x00);
+    write_cmd(0xC1);
+    write_dat(0x0B);
+    write_dat(0x02);
+    write_cmd(0xC2);
+    write_dat(0x07);
+    write_dat(0x02);
+    write_cmd(0xC3);
+    write_dat(0x0C);
+    write_dat(0x02);
+    write_dat(0x00);
+    write_cmd(0xCC);
+    write_dat(0x10);
+    write_cmd(0xCD);
+    write_dat(0x08);
+    write_cmd(0xB0);
+    write_dat(0x00);
+    write_dat(0x11);
+    write_dat(0x16);
+    write_dat(0x0e);
+    write_dat(0x11);
+    write_dat(0x06);
+    write_dat(0x05);
+    write_dat(0x09);
+    write_dat(0x08);
+    write_dat(0x21);
+    write_dat(0x06);
+    write_dat(0x13);
+    write_dat(0x10);
+    write_dat(0x29);
+    write_dat(0x31);
+    write_dat(0x18);
+    write_cmd(0xB1);
+    write_dat(0x00);
+    write_dat(0x11);
+    write_dat(0x16);
+    write_dat(0x0e);
+    write_dat(0x11);
+    write_dat(0x07);
+    write_dat(0x05);
+    write_dat(0x09);
+    write_dat(0x09);
+    write_dat(0x21);
+    write_dat(0x05);
+    write_dat(0x13);
+    write_dat(0x11);
+    write_dat(0x2a);
+    write_dat(0x31);
+    write_dat(0x18);
+    write_cmd(0xFF);
+    write_dat(0x77);
+    write_dat(0x01);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x11);
+    write_cmd(0xB0);
+    write_dat(0x6d);
+    write_cmd(0xB1);
+    write_dat(0x37);
+    write_cmd(0xB2);
+    write_dat(0x81);
+    write_cmd(0xB3);
+    write_dat(0x80);
+    write_cmd(0xB5);
+    write_dat(0x43);
+    write_cmd(0xB7);
+    write_dat(0x85);
+    write_cmd(0xB8);
+    write_dat(0x20);
+    write_cmd(0xC1);
+    write_dat(0x78);
+    write_cmd(0xC2);
+    write_dat(0x78);
+    write_cmd(0xD0);
+    write_dat(0x88);
+    write_cmd(0xE0);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x02);
+    write_cmd(0xE1);
+    write_dat(0x03);
+    write_dat(0xA0);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x04);
+    write_dat(0xA0);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x20);
+    write_dat(0x20);
+    write_cmd(0xE2);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_cmd(0xE3);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x11);
+    write_dat(0x00);
+    write_cmd(0xE4);
+    write_dat(0x22);
+    write_dat(0x00);
+    write_cmd(0xE5);
+    write_dat(0x05);
+    write_dat(0xEC);
+    write_dat(0xA0);
+    write_dat(0xA0);
+    write_dat(0x07);
+    write_dat(0xEE);
+    write_dat(0xA0);
+    write_dat(0xA0);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_cmd(0xE6);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x11);
+    write_dat(0x00);
+    write_cmd(0xE7);
+    write_dat(0x22);
+    write_dat(0x00);
+    write_cmd(0xE8);
+    write_dat(0x06);
+    write_dat(0xED);
+    write_dat(0xA0);
+    write_dat(0xA0);
+    write_dat(0x08);
+    write_dat(0xEF);
+    write_dat(0xA0);
+    write_dat(0xA0);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_cmd(0xEB);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x40);
+    write_dat(0x40);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_cmd(0xED);
+    write_dat(0xFF);
+    write_dat(0xFF);
+    write_dat(0xFF);
+    write_dat(0xBA);
+    write_dat(0x0A);
+    write_dat(0xBF);
+    write_dat(0x45);
+    write_dat(0xFF);
+    write_dat(0xFF);
+    write_dat(0x54);
+    write_dat(0xFB);
+    write_dat(0xA0);
+    write_dat(0xAB);
+    write_dat(0xFF);
+    write_dat(0xFF);
+    write_dat(0xFF);
+    write_cmd(0xEF);
+    write_dat(0x10);
+    write_dat(0x0D);
+    write_dat(0x04);
+    write_dat(0x08);
+    write_dat(0x3F);
+    write_dat(0x1F);
+    write_cmd(0xFF);
+    write_dat(0x77);
+    write_dat(0x01);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x13);
+    write_cmd(0xEF);
+    write_dat(0x08);
+    write_cmd(0xFF);
+    write_dat(0x77);
+    write_dat(0x01);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_dat(0x00);
+    write_cmd(0x11);
+    mdelay(120);
+		write_cmd(0x29);
+    write_cmd(0x36);
+    write_dat(0x08);
+    write_cmd(0x3A);
+    write_dat(0x66);
+    printf("st7701s init finished!!!");
+}
+//--------------------------------------------------------------------------------------
+
 
 #ifdef CONFIG_VIDEO_HDMI
 
@@ -529,6 +875,7 @@ static void sunxi_lcdc_init(void)
 	struct sunxi_lcdc_reg * const lcdc =
 		(struct sunxi_lcdc_reg *)SUNXI_LCD0_BASE;
 
+
 	/* Reset off */
 #ifdef CONFIG_SUNXI_GEN_SUN6I
 	setbits_le32(&ccm->ahb_reset1_cfg, 1 << AHB_RESET_OFFSET_LCD0);
@@ -971,6 +1318,7 @@ static void sunxi_mode_set(const struct ctfb_res_modes *mode,
 	case sunxi_monitor_composite_ntsc:
 	case sunxi_monitor_composite_pal_m:
 	case sunxi_monitor_composite_pal_nc:
+		st7701_init();
 #ifdef CONFIG_VIDEO_COMPOSITE
 		sunxi_composer_mode_set(mode, address);
 		sunxi_lcdc_tcon1_mode_set(mode, &clk_div, &clk_double, 0);
@@ -1069,6 +1417,10 @@ void *video_hw_init(void)
 
 	memset(&sunxi_display, 0, sizeof(struct sunxi_display));
 
+#ifdef CONFIG_VIDEO_ST7701S
+	spi_lcd_ili9806_init();
+#endif
+
 	video_get_ctfb_res_modes(RES_MODE_1024x768, 24, &mode,
 				 &sunxi_display.depth, &options);
 #ifdef CONFIG_VIDEO_HDMI
@@ -1091,6 +1443,7 @@ void *video_hw_init(void)
 		printf("Unknown monitor: '%s', falling back to '%s'\n",
 		       mon, sunxi_get_mon_desc(sunxi_display.monitor));
 
+	st7701_init();
 #ifdef CONFIG_VIDEO_HDMI
 	/* If HDMI/DVI is selected do HPD & EDID, and handle fallback */
 	if (sunxi_display.monitor == sunxi_monitor_dvi ||
@@ -1269,7 +1622,7 @@ int sunxi_simplefb_setup(void *blob)
 
 	offset = sunxi_simplefb_fdt_match(blob, pipeline);
 	if (offset < 0) {
-		eprintf("Cannot setup simplefb: node not found\n");
+		printf("Cannot setup simplefb: node not found\n");
 		return 0; /* Keep older kernels working */
 	}
 
